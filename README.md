@@ -11,40 +11,65 @@
 - Real-time device control via WebSocket
 - PJLink Class 1 projector/display support (TCP, async, authenticated)
 - Scene-based automation (one-click meeting presets)
-- REST API with OpenAPI docs
+- REST API with OpenAPI docs at `/docs`
 - YAML-based room and device configuration
-- Pluggable driver architecture
-- Built-in PJLink simulator for development
+- Pluggable driver architecture — add new devices via a simple Python class
+- Built-in PJLink simulator for development (no real hardware needed)
 - React + Tailwind frontend with live status indicators
-- Scheduled polling with APScheduler
+
+## Development Environment
+
+| Item | Value |
+|------|-------|
+| **Host** | `victor@10.0.0.150` (Ubuntu, ubuntuVM2) |
+| **Project root** | `~/nomy` |
+| **Python** | 3.13.7 |
+| **Node** | 22.22.0 |
+| **SSH key** | `~/.ssh/id_ed25519` |
+
+> All development happens on the Ubuntu machine. From a Windows client:
+> ```
+> ssh -i C:/Users/Victor/.ssh/id_ed25519 victor@10.0.0.150
+> ```
 
 ## Quick Start
 
-### Backend
+### 1. Start the PJLink simulator (no real hardware needed)
 
 ```bash
-cd backend
-python -m venv .venv
+cd ~/nomy
+python3 simulators/pjlink_sim.py --port 4352 --name Test Projector
+```
+
+### 2. Start the backend
+
+```bash
+cd ~/nomy/backend
+python3 -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ../[dev]
 uvicorn main:app --reload --port 8000
 ```
 
-### Frontend
+API docs available at: http://10.0.0.150:8000/docs
+
+### 3. Start the frontend
 
 ```bash
-cd frontend
+cd ~/nomy/frontend
 npm install
 npm run dev
 ```
 
-### Simulator (no real hardware needed)
+UI available at: http://10.0.0.150:5173
+
+### 4. Or build the frontend
 
 ```bash
-python simulators/pjlink_sim.py --port 4352 --name "Test Projector"
+cd ~/nomy/frontend
+npm run build
+# Serve the dist/ folder via any static file server or the FastAPI backend
 ```
-
-Then open http://localhost:5173 to see the room controller UI.
 
 ## Architecture
 
@@ -70,21 +95,95 @@ Then open http://localhost:5173 to see the room controller UI.
 |  | Driver    |  | Switcher|  | Audio   |               |
 |  +-----------+  +---------+  +---------+               |
 +----------------------------------------------------------+
-                         | TCP
+                         | TCP/UDP
 +----------------------------------------------------------+
 |            Physical / Simulated Devices                  |
 |        Projectors, Switchers, DSPs, Cameras              |
 +----------------------------------------------------------+
 ```
 
+## Project Structure
+
+```
+~/nomy/
+├── backend/                    # FastAPI application
+│   ├── main.py                 # Entry point — run with uvicorn
+│   ├── api/routes/             # REST endpoints (devices, rooms, system)
+│   ├── api/websocket.py        # WebSocket handler + connection manager
+│   ├── core/                   # Config loader, event bus, plugin loader, state manager
+│   └── devices/display/        # PJLink driver (more drivers added per phase)
+├── simulators/
+│   └── pjlink_sim.py           # PJLink TCP simulator — use for dev without hardware
+├── config/
+│   ├── nomy.yaml               # Global config (poll interval, log level)
+│   └── rooms/example-room.yaml # Example room with devices and scenes
+├── frontend/                   # React + Vite UI
+│   └── src/
+│       ├── components/         # RoomView, DeviceCard, StatusBar
+│       ├── hooks/useWebSocket.ts
+│       ├── services/api.ts
+│       └── types/index.ts
+└── docs/                       # Protocol docs, driver guide
+```
+
 ## Configuration
 
-Rooms are defined in `config/rooms/*.yaml`. See `config/rooms/example-room.yaml` for a complete example with devices and scenes.
+Rooms are defined in `config/rooms/*.yaml`. Copy and edit `example-room.yaml`:
 
-## Docs
+```yaml
+room:
+  id: my-room
+  name: Conference Room A
 
-See [docs/](docs/) for protocol documentation and driver development guide.
+devices:
+  - id: projector-main
+    name: Main Projector
+    type: display
+    driver: pjlink
+    config:
+      host: 192.168.1.100
+      port: 4352
+      password: 
+
+scenes:
+  - name: Presentation
+    actions:
+      - device: projector-main
+        command: power_on
+```
+
+## Adding a Device Driver
+
+See [docs/adding-devices.md](docs/adding-devices.md). In short:
+
+1. Create a class in `backend/devices/<type>/<name>.py` that extends `DeviceDriver`
+2. Implement `connect`, `disconnect`, `get_state`, `send_command`
+3. Register the driver in `backend/core/plugin_loader.py` `DRIVER_MAP`
+
+## API Reference
+
+```
+GET  /api/v1/health
+GET  /api/v1/system/status
+GET  /api/v1/rooms
+GET  /api/v1/rooms/{room_id}
+POST /api/v1/rooms/{room_id}/scene/{scene_name}
+GET  /api/v1/rooms/{room_id}/devices
+GET  /api/v1/rooms/{room_id}/devices/{device_id}
+POST /api/v1/rooms/{room_id}/devices/{device_id}/command
+WS   /ws/rooms/{room_id}
+```
+
+Full interactive docs: http://10.0.0.150:8000/docs
+
+## Roadmap
+
+- **Phase 1 (done):** FastAPI skeleton, PJLink driver + sim, WebSocket, React UI
+- **Phase 2:** VISCA camera, matrix switcher, scene UI, source switching
+- **Phase 3:** Zoom/Teams/Jitsi, Google/MS calendar, conference panel
+- **Phase 4:** Tauri desktop app, kiosk mode, Docker/Proxmox deployment
+- **Phase 5:** Mobile UI, Dante audio, DMX lighting, multi-room dashboard
 
 ## License
 
-MIT - see [LICENSE](LICENSE)
+MIT — see [LICENSE](LICENSE)
