@@ -2,9 +2,11 @@ import os
 from pathlib import Path
 import yaml
 
+# Support running from backend/ or project root
+_THIS_DIR = Path(__file__).parent.parent.parent  # project root
 
-CONFIG_PATH = Path(os.getenv("NOMY_CONFIG", "config/nomy.yaml"))
-ROOMS_DIR = Path(os.getenv("NOMY_ROOMS_DIR", "config/rooms"))
+CONFIG_PATH = Path(os.getenv("NOMY_CONFIG", str(_THIS_DIR / "config" / "nomy.yaml")))
+ROOMS_DIR = Path(os.getenv("NOMY_ROOMS_DIR", str(_THIS_DIR / "config" / "rooms")))
 
 
 def load_config() -> dict:
