@@ -1,0 +1,39 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+htmlcov/
+.coverage
+*.egg
+
+# Node
+node_modules/
+.vite/
+frontend/dist/
+
+# Rust
+target/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# App
+nomy.db
+*.db-journal
+logs/

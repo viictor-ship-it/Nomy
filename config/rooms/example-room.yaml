@@ -1,0 +1,42 @@
+room:
+  id: example-room
+  name: Example Boardroom
+  description: Main conference room with projector and AV system
+
+devices:
+  - id: projector-main
+    name: Main Projector
+    type: display
+    driver: pjlink
+    config:
+      host: 127.0.0.1
+      port: 4352
+      password: 
+
+scenes:
+  - name: Meeting Start
+    actions:
+      - device: projector-main
+        command: power_on
+      - device: projector-main
+        command: input
+        params:
+          input: 31
+
+  - name: Meeting End
+    actions:
+      - device: projector-main
+        command: mute_on
+      - device: projector-main
+        command: power_off
+
+  - name: Presentation Mode
+    actions:
+      - device: projector-main
+        command: power_on
+      - device: projector-main
+        command: input
+        params:
+          input: 31
+      - device: projector-main
+        command: mute_off

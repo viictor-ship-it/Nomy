@@ -1,0 +1,3 @@
+# Nomy global configuration
+poll_interval: 10
+log_level: INFO
