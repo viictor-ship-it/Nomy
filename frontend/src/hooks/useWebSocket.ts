@@ -33,7 +33,7 @@ export function useRoomWebSocket(roomId: string | null, onMessage: (msg: WsMessa
     return () => wsRef.current?.close();
   }, [connect]);
 
-  const send = useCallback(msg => {
+  const send = useCallback((msg: object) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(msg));
     }
