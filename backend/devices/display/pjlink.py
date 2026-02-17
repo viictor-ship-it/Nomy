@@ -117,7 +117,7 @@ class PJLinkDriver(DeviceDriver):
                     elif token and not self.password:
                         auth_prefix = ""
 
-                payload = f"{auth_prefix}{message}\r"
+                payload = f"{auth_prefix}{message}" + chr(13) + chr(10)
                 writer.write(payload.encode("ascii"))
                 await writer.drain()
 

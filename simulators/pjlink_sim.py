@@ -16,9 +16,9 @@ class PJLinkSimulator:
         logger.info(f"Connection from {addr}")
         try:
             if self.password:
-                token = self._random_token(); greeting = f"PJLINK 1 {token}\r"
+                token = self._random_token(); greeting = f"PJLINK 1 {token}\r\n"
             else:
-                token = ""; greeting = "PJLINK 0\r"
+                token = ""; greeting = "PJLINK 0\r\n"
             writer.write(greeting.encode("ascii")); await writer.drain()
             raw = await asyncio.wait_for(reader.readline(), timeout=10.0)
             line = raw.decode("ascii", errors="ignore").strip()
@@ -27,11 +27,11 @@ class PJLinkSimulator:
                 exp = hashlib.md5((token + self.password).encode()).hexdigest()
                 if len(line) >= 32:
                     if line[:32] != exp:
-                        writer.write(b"PJLINK ERRA\r"); await writer.drain(); return
+                        writer.write(("PJLINK ERRA" + chr(13) + chr(10)).encode("ascii")); await writer.drain(); return
                     line = line[32:]
             response = self._process_command(line)
             logger.info(f"  CMD: {line!r}  ->  {response!r}")
-            writer.write((response + "\r").encode("ascii")); await writer.drain()
+            writer.write((response + chr(13) + chr(10)).encode("ascii")); await writer.drain()
         except asyncio.TimeoutError: pass
         except Exception as e: logger.error(f"Handler error: {e}")
         finally:
